@@ -92,6 +92,7 @@ export class ApsDataManagement implements INodeType {
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
+    const BASE_URL = 'https://developer.api.autodesk.com';
 
     for (let i = 0; i < items.length; i++) {
       try {
@@ -100,29 +101,29 @@ export class ApsDataManagement implements INodeType {
         let url = '';
         switch (operation) {
           case 'getHubs': {
-            url = '/project/v1/hubs';
+            url = `${BASE_URL}/project/v1/hubs`;
             break;
           }
           case 'getProjects': {
             const hubId = this.getNodeParameter('hubId', i) as string;
-            url = `/project/v1/hubs/${encodeURIComponent(hubId)}/projects`;
+            url = `${BASE_URL}/project/v1/hubs/${encodeURIComponent(hubId)}/projects`;
             break;
           }
           case 'getTopFolders': {
             const projectId = this.getNodeParameter('projectId', i) as string;
-            url = `/project/v1/projects/${encodeURIComponent(projectId)}/topFolders`;
+            url = `${BASE_URL}/project/v1/projects/${encodeURIComponent(projectId)}/topFolders`;
             break;
           }
           case 'getItems': {
             const projectId = this.getNodeParameter('projectId', i) as string;
             const folderId = this.getNodeParameter('folderId', i) as string;
-            url = `/data/v1/projects/${encodeURIComponent(projectId)}/folders/${encodeURIComponent(folderId)}/contents`;
+            url = `${BASE_URL}/data/v1/projects/${encodeURIComponent(projectId)}/folders/${encodeURIComponent(folderId)}/contents`;
             break;
           }
           case 'getItemVersions': {
             const projectId = this.getNodeParameter('projectId', i) as string;
             const itemId = this.getNodeParameter('itemId', i) as string;
-            url = `/data/v1/projects/${encodeURIComponent(projectId)}/items/${encodeURIComponent(itemId)}/versions`;
+            url = `${BASE_URL}/data/v1/projects/${encodeURIComponent(projectId)}/items/${encodeURIComponent(itemId)}/versions`;
             break;
           }
         }
