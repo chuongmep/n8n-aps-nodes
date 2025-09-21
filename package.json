@@ -1,19 +1,19 @@
 {
-  "name": "n8n-nodes-<...>",
+  "name": "n8n-nodes-aps",
   "version": "0.1.0",
-  "description": "",
+  "description": "The n8n Autodesk Platform Services (APS) nodes package.",
   "keywords": [
     "n8n-community-node-package"
   ],
   "license": "MIT",
   "homepage": "",
   "author": {
-    "name": "",
-    "email": ""
+    "name": "chuongmep",
+    "email": "chuongpqvn@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<...>/n8n-nodes-<...>.git"
+    "url": "https://github.com/chuongmep/n8n-aps-nodes.git"
   },
   "engines": {
     "node": ">=20.15"
@@ -33,8 +33,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/ExampleCredentialsApi.credentials.js",
-      "dist/credentials/HttpBinApi.credentials.js"
+      "dist/credentials/AutodeskPlatformServicesOAuth2Api.credentials.js",
+      "dist/credentials/AutodeskPlatformServicesClientCredentialsOAuth2Api.credentials.js"
     ],
     "nodes": [
       "dist/nodes/ExampleNode/ExampleNode.node.js",
