@@ -48,6 +48,8 @@ Alternatively, add this package to your self-hosted n8n project and restart n8n.
 
 Note: “Get Hubs” typically requires 3‑legged OAuth2 (user-context resource).
 
+![](./docs/msedge_dIwzpaHK9K.png)
+
 ## APS Data Management node
 
 Operations:
@@ -64,6 +66,8 @@ Options:
 - Split Into Items (default: ON)
   - ON: array responses become multiple n8n items (one per element)
   - OFF: returns a single n8n item; when simplified this is `{ data: [...] }`, otherwise the raw JSON:API response
+
+![](./docs/msedge_GDPXvAAPz6.png)
 
 ### Example outputs
 
