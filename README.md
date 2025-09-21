@@ -1,48 +1,120 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+![APS banner](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
 
-# n8n-nodes-starter
+# n8n-nodes-aps
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
+> Autodesk Platform Services (APS, formerly Forge) nodes for n8n.
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+This community package adds:
 
-If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
+- Credentials
+  - AutodeskPlatformServicesOAuth2Api (3‑legged OAuth2, Authorization Code)
+  - AutodeskPlatformServicesClientCredentialsOAuth2Api (2‑legged OAuth2, Client Credentials)
+- Node
+  - APS Data Management: read hubs, projects, folders, items, and versions from APS
 
-## Prerequisites
+Both credentials and the node are implemented in TypeScript for n8n 1.x.
 
-You need the following installed on your development machine:
+## Install
 
-* [git](https://git-scm.com/downloads)
-* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  npm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+If you have a global n8n installation:
 
-## Using this starter
+```powershell
+# 1) Install dependencies
+npm install
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+# 2) Build
+npm run build
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
-   ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `npm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+# 3) Link this package into your n8n instance
+npm link
+npm link n8n-nodes-aps
 
-## More information
+# 4) Restart n8n so it loads the linked package
+n8n stop; n8n start
+```
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+Alternatively, add this package to your self-hosted n8n project and restart n8n.
+
+## Configure APS credentials
+
+1) Create an app in the Autodesk Developer Portal and collect your Client ID/Secret.
+2) Choose your auth flow:
+- 3‑legged OAuth2 (Authorization Code) – recommended for user-specific data like hubs/projects.
+- 2‑legged OAuth2 (Client Credentials) – service-to-service; limited access for some endpoints.
+3) In n8n, create a new credential using one of:
+- AutodeskPlatformServicesOAuth2Api
+- AutodeskPlatformServicesClientCredentialsOAuth2Api
+4) Scopes: at minimum for reading Data Management, include `data:read`. Add `data:write` or `bucket:*` if needed.
+
+Note: “Get Hubs” typically requires 3‑legged OAuth2 (user-context resource).
+
+## APS Data Management node
+
+Operations:
+- Get Hubs: List hubs available to the user
+- Get Projects: List projects in a hub (requires Hub ID)
+- Get Top Folders: List top-level folders for a project (requires Project ID)
+- Get Items: List folder contents (requires Project ID and Folder ID)
+- Get Item Versions: List versions for an item (requires Project ID and Item ID)
+
+Options:
+- Simplify Output (default: ON)
+  - Flattens JSON:API entities to a clean object: `{ id, type, href, ...attributes }`
+  - Turn OFF to get raw JSON:API entities (with `attributes`, `links`, `relationships`)
+- Split Into Items (default: ON)
+  - ON: array responses become multiple n8n items (one per element)
+  - OFF: returns a single n8n item; when simplified this is `{ data: [...] }`, otherwise the raw JSON:API response
+
+### Example outputs
+
+- Get Hubs with Simplify=ON, Split=ON → multiple items like:
+```json
+{
+  "id": "b.1715...e72f6",
+  "type": "hubs",
+  "href": "https://developer.api.autodesk.com/project/v1/hubs/b.1715...e72f6",
+  "name": "Testing",
+  "region": "US",
+  "extension": { "type": "hubs:autodesk.bim360:Account", "version": "1.0", "schema": {"href": "..."}, "data": {} }
+}
+```
+
+- Get Hubs with Simplify=ON, Split=OFF → single item:
+```json
+{
+  "data": [ { "id": "...", "type": "hubs", "href": "...", "name": "...", "region": "..." } ]
+}
+```
+
+- Get Hubs with Simplify=OFF, Split=OFF → single item with raw JSON:API:
+```json
+{
+  "jsonapi": { "version": "1.0" },
+  "links": { "self": { "href": "https://developer.api.autodesk.com/project/v1/hubs" } },
+  "data": [ { "type": "hubs", "id": "...", "attributes": { /* ... */ }, "links": { /* ... */ } } ],
+  "meta": { /* ... */ }
+}
+```
+
+### IDs and URNs
+- hubId: from Get Hubs result (`item.id`)
+- projectId: from Get Projects result (`item.id`)
+- folderId: URN from APS (e.g., `urn:adsk.wipprod:fs.folder:co.xxxx`)
+- itemId: URN (e.g., `urn:adsk.wipprod:dm.lineage:xxxx`)
+
+## Troubleshooting
+- Invalid URL: The node uses absolute APS URLs; ensure you’re on the latest build and restart n8n.
+- JSON shows as string: The node forces JSON mode and parses if needed; update/restart n8n if you still see quoted JSON.
+- Client credentials invalid: Use 3‑legged OAuth2 for user-context operations like Get Hubs.
+- 403 warnings in `meta`: You may lack access for some BIM 360 regions; check account permissions and app scopes.
+
+## Development
+- Lint: `npm run lint`
+- Fix lint: `npm run lintfix`
+- Build: `npm run build`
+- Dev (watch): `npm run dev`
+- After building, restart n8n so it reloads the `dist` output.
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+MIT
