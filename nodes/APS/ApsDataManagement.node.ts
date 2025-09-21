@@ -49,6 +49,22 @@ export class ApsDataManagement implements INodeType {
         default: 'getHubs',
       },
 
+      // Output options
+      {
+        displayName: 'Simplify Output',
+        name: 'simplify',
+        type: 'boolean',
+        default: true,
+        description: 'Flatten each JSON:API entity to useful fields (id, type, href, and all attributes).',
+      },
+      {
+        displayName: 'Split Into Items',
+        name: 'splitItems',
+        type: 'boolean',
+        default: true,
+        description: 'When enabled, arrays are split so each element becomes an individual n8n item. Disable to return a single item with a data array.',
+      },
+
       // Common inputs for specific operations
       {
         displayName: 'Hub ID',
@@ -94,6 +110,17 @@ export class ApsDataManagement implements INodeType {
     const returnData: INodeExecutionData[] = [];
     const BASE_URL = 'https://developer.api.autodesk.com';
 
+    const simplifyEntity = (entity: any) => {
+      const href = entity?.links?.self?.href ?? entity?.links?.href ?? undefined;
+      const attributes = (entity?.attributes && typeof entity.attributes === 'object') ? entity.attributes : {};
+      return {
+        id: entity?.id,
+        type: entity?.type,
+        href,
+        ...attributes,
+      } as Record<string, unknown>;
+    };
+
     for (let i = 0; i < items.length; i++) {
       try {
         const operation = this.getNodeParameter('operation', i) as Operation;
@@ -132,10 +159,45 @@ export class ApsDataManagement implements INodeType {
           method: 'GET',
           url,
           qs: {},
+          json: true,
+          headers: {
+            Accept: 'application/vnd.api+json, application/json;q=0.9',
+          },
         });
 
-        const results = Array.isArray((response as any)?.data) ? (response as any).data : response;
-        returnData.push({ json: results });
+        let body = response as any;
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch {
+            // keep as-is if not valid JSON
+          }
+        }
+        const simplify = this.getNodeParameter('simplify', i, true) as boolean;
+        const splitItems = this.getNodeParameter('splitItems', i, true) as boolean;
+        if (Array.isArray(body?.data)) {
+          if (splitItems) {
+            for (const element of body.data) {
+              const json = simplify ? simplifyEntity(element) : element;
+              returnData.push({ json, pairedItem: { item: i } });
+            }
+          } else {
+            // Wrap in object to comply with n8n item shape
+            if (simplify) {
+              const data = (body.data as any[]).map((el) => simplifyEntity(el));
+              returnData.push({ json: { data }, pairedItem: { item: i } });
+            } else {
+              returnData.push({ json: body, pairedItem: { item: i } });
+            }
+          }
+        } else if (body && typeof body === 'object' && body.data && typeof body.data === 'object') {
+          const target = body.data;
+          const json = simplify ? simplifyEntity(target) : target;
+          returnData.push({ json, pairedItem: { item: i } });
+        } else {
+          // Non-JSON:API or unexpected shape; return as-is
+          returnData.push({ json: body, pairedItem: { item: i } });
+        }
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({ json: { error: (error as Error).message }, pairedItem: i });
