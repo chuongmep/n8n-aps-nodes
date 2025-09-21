@@ -37,8 +37,7 @@
       "dist/credentials/AutodeskPlatformServicesClientCredentialsOAuth2Api.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ExampleNode/ExampleNode.node.js",
-      "dist/nodes/HttpBin/HttpBin.node.js"
+      "dist/nodes/APS/ApsDataManagement.node.js"
     ]
   },
   "devDependencies": {
