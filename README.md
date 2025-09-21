@@ -46,7 +46,9 @@ Alternatively, add this package to your self-hosted n8n project and restart n8n.
 - AutodeskPlatformServicesClientCredentialsOAuth2Api
 4) Scopes: at minimum for reading Data Management, include `data:read`. Add `data:write` or `bucket:*` if needed.
 
-Note: “Get Hubs” typically requires 3‑legged OAuth2 (user-context resource).
+Note: “Get Hubs” typically requires 3‑legged OAuth2 (user-context resource). Call back url must be set in the app settings:
+
+Callback URL: `https://<your-n8n-domain>/rest/oauth2-credential/callback`
 
 ![](./docs/msedge_dIwzpaHK9K.png)
 
